@@ -125,7 +125,11 @@ public class RegistarationController extends ParentController {
 			DBCursor cursor = userTable.find(query);
 			if (cursor.hasNext())
 				result = true;
-
+			
+			// closing cursor
+			if (cursor != null) {
+				cursor.close();
+			}
 
 		} catch (Exception e) {
 			System.out.println(e);
@@ -168,9 +172,15 @@ public class RegistarationController extends ParentController {
 			BasicDBObject query = new BasicDBObject();
 			query.put("username", username);
 			query.put("password", password);
+			
 			DBCursor cursor = userTable.find(query);
 			if (cursor.hasNext())
 				result = true;
+			
+			// closing cursor
+			if (cursor != null) {
+				cursor.close();
+			}
 
 		} catch (Exception e) {
 			System.out.println(e);
@@ -218,6 +228,11 @@ public class RegistarationController extends ParentController {
 				Date userRegistrationDate = (Date) userObject.get("registrationDate");
 				if (userRegistrationDate.getTime() > wantedDate.getTime())
 					result++;
+			}
+			
+			// closing cursor
+			if (cursor != null) {
+				cursor.close();
 			}
 
 		} catch (Exception e) {
@@ -269,6 +284,11 @@ public class RegistarationController extends ParentController {
 				String lastName = (String) userObject.get("lastName");
 				User user = new User(username, password, firstName, lastName);
 				userList.add(user);
+			}
+			
+			// closing cursor
+			if (cursor != null) {
+				cursor.close();
 			}
 			
 		} catch (Exception e) {

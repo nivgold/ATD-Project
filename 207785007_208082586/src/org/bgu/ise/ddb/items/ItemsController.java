@@ -51,7 +51,7 @@ public class ItemsController extends ParentController {
 	@RequestMapping(value = "fill_media_items", method = { RequestMethod.GET })
 	public void fillMediaItems(HttpServletResponse response) {
 		// :TODO your implementation
-
+		
 		Connection oracleConnection = null;
 		Statement statement = null;
 
@@ -63,10 +63,30 @@ public class ItemsController extends ParentController {
 			statement = oracleConnection.createStatement();
 
 			ResultSet mediaItemsIterator = statement.executeQuery(query);
+			
+			List<String> titleList = new ArrayList<>();
+			List<String> prod_yearList = new ArrayList<>();
+			
 			while (mediaItemsIterator.next()) {
 				String title = mediaItemsIterator.getString(1);
 				String prod_year = mediaItemsIterator.getString(2);
-
+				
+				titleList.add(title);
+				prod_yearList.add(prod_year);
+			}
+			
+			// finished parse successfully
+			
+			if (titleList.size() != prod_yearList.size())
+				throw new Exception();
+			
+			restartMediaItem();
+			
+			for (int i=0; i<titleList.size(); i++) {
+				
+				String title = titleList.get(i);
+				String prod_year = prod_yearList.get(i);
+				
 				// inserting to system storage
 				insertMediaItemToSystem(title, prod_year);
 			}
@@ -104,26 +124,82 @@ public class ItemsController extends ParentController {
 		System.out.println(urladdress);
 
 		// :TODO your implementation
-
+		
 		HttpStatus status = HttpStatus.OK;
 
 		try (BufferedReader br = new BufferedReader(new InputStreamReader((new URL(urladdress).openStream())))) {
 			String line;
+			List<String[]> valuesList = new ArrayList<>();
+			
 			while ((line = br.readLine()) != null) {
 				String[] values = line.split(",");
 
 				String title = values[0];
 				String prod_year = values[1];
+				
+				Integer.parseInt(prod_year);
+				
+				valuesList.add(values);
 
+			}
+			
+			// finished parse successfully
+			
+			restartMediaItem();
+			
+			for (String[] values : valuesList) {
+				
+				String title = values[0];
+				String prod_year = values[1];
+				
 				// inserting to the system storage
 				insertMediaItemToSystem(title, prod_year);
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			status = HttpStatus.CONFLICT;
 		}
 
 		response.setStatus(status.value());
+	}
+	
+	/**
+	 * deleting all of the documents in the "MediaItem" collection
+	 */
+	private void restartMediaItem() {
+		
+		System.out.println("Cleaning MediaItem Collection");
+		
+		MongoClient client = null;
+		
+		try {
+			
+			// creating a mongoDB client
+			client = new MongoClient("localhost", 27017);
+			
+			// retrieving the "MediaItem" table
+			DBCollection mediaItemTable= client.getDB("ATD_Project_DB").getCollection("MediaItem");
+			
+			// Delete All documents from collection using DBCursor
+			DBCursor cursor = mediaItemTable.find();
+			while (cursor.hasNext()) {
+				mediaItemTable.remove(cursor.next());
+			}
+			
+			// closing cursor
+			if (cursor != null) {
+				cursor.close();
+			}
+			
+
+		} catch (Exception e) {
+			System.out.println(e);
+		} finally {
+			// closing resources
+			if (client != null) {
+				client.close();
+			}
+		}
 	}
 
 	/**
@@ -168,6 +244,12 @@ public class ItemsController extends ParentController {
 				mediaItemsList.add(new MediaItems((String) mediaItem.get("title"),
 						Integer.parseInt((String) mediaItem.get("prod_year"))));
 			}
+			
+			// closing cursor
+			if (cursor != null) {
+				cursor.close();
+			}
+			
 
 		} catch (Exception e) {
 			System.out.println(e);
@@ -261,9 +343,15 @@ public class ItemsController extends ParentController {
 
 			BasicDBObject query = new BasicDBObject();
 			query.put("title", title);
+			
 			DBCursor cursor = userTable.find(query);
 			if (cursor.hasNext())
 				exist = true;
+			
+			// closing cursor
+			if (cursor != null) {
+				cursor.close();
+			}
 
 		} catch (Exception e) {
 			System.out.println(e);

@@ -29,7 +29,7 @@ import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.model.DBCollectionFindAndModifyOptions;
-import com.sun.jmx.snmp.Timestamp;
+
 
 /**
  * @author Alex
@@ -63,6 +63,11 @@ public class HistoryController extends ParentController{
 			DBCursor cursor = userTable.find(query);
 			if (cursor.hasNext())
 				exist = true;
+			
+			// closing cursor
+			if (cursor != null) {
+				cursor.close();
+			}
 			
 		} catch(Exception e) {
 			System.out.println(e);
@@ -100,6 +105,10 @@ public class HistoryController extends ParentController{
 			if (cursor.hasNext())
 				exist = true;
 			
+			// closing cursor
+			if (cursor != null) {
+				cursor.close();
+			}
 			
 		} catch(Exception e) {
 			System.out.println(e);
@@ -222,6 +231,11 @@ public class HistoryController extends ParentController{
 					userHistoriesList.add(pair);
 				}
 				
+				// closing cursor
+				if (queryResult != null) {
+					queryResult.close();
+				}
+				
 			}
 		} catch (Exception e) {
 			System.out.println(e);
@@ -277,7 +291,6 @@ public class HistoryController extends ParentController{
 				// getting all of the titles' history by descending order
 				DBCursor queryResult = historyTable.find(query).sort(new BasicDBObject("timestamp", -1));
 				
-				
 				// iterating through the histories
 				while(queryResult.hasNext()) {
 					DBObject history = queryResult.next();
@@ -285,6 +298,11 @@ public class HistoryController extends ParentController{
 					long timestamp = (long) history.get("timestamp");
 					HistoryPair pair = new HistoryPair(username, new Date(timestamp));
 					titleHistoriesList.add(pair);
+				}
+				
+				// closing cursor
+				if (queryResult != null) {
+					queryResult.close();
 				}
 				
 			}
@@ -346,11 +364,18 @@ public class HistoryController extends ParentController{
 				// finding the User whose username is `username`
 				BasicDBObject query = new BasicDBObject();
 				query.put("username", username);
+				
 				DBCursor cursor = userTable.find(query);
 				if (cursor.hasNext()) {
 					DBObject user = cursor.next();
 					userSet.add(new User((String)user.get("username"), (String)user.get("firstName"), (String)user.get("lastName")));
 				}
+				
+				// closing cursor
+				if (cursor != null) {
+					cursor.close();
+				}
+				
 			}
 			
 		} catch (Exception e) {
